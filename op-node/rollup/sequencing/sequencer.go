@@ -87,6 +87,13 @@ type Sequencer struct {
 	spec            *rollup.ChainSpec
 	sealingDuration time.Duration
 
+	// replayPacing, when true, paces block sealing to a real block-time window even
+	// when the chain timestamp is far behind wall-clock (i.e. we are replaying a
+	// historical fork of the chain), instead of sealing instantly to "catch up".
+	// This keeps block production at one block per block-time and gives the
+	// execution engine its normal fill window. See OP-NODE_PATCH.md at the repo root.
+	replayPacing bool
+
 	maxSafeLag atomic.Uint64
 
 	// stalledByMaxSafeLag tracks whether the sequencer was stalled specifically
@@ -138,6 +145,7 @@ var _ SequencerIface = (*Sequencer)(nil)
 
 func NewSequencer(driverCtx context.Context, log log.Logger, rollupCfg *rollup.Config,
 	sealingDuration time.Duration,
+	replayPacing bool,
 	attributesBuilder derive.AttributesBuilder,
 	l1OriginSelector L1OriginSelectorIface,
 	listener SequencerStateListener,
@@ -155,6 +163,7 @@ func NewSequencer(driverCtx context.Context, log log.Logger, rollupCfg *rollup.C
 		rollupCfg:        rollupCfg,
 		spec:             rollup.NewChainSpec(rollupCfg),
 		sealingDuration:  sealingDuration,
+		replayPacing:     replayPacing,
 		listener:         listener,
 		conductor:        conductor,
 		asyncGossip:      asyncGossip,
@@ -250,7 +259,20 @@ func (d *Sequencer) onBuildStarted(x engine.BuildStartedEvent) {
 	payloadTime := time.Unix(int64(x.Parent.Time+d.rollupCfg.BlockTime), 0)
 	remainingTime := payloadTime.Sub(now)
 	if remainingTime < d.sealingDuration {
-		d.nextAction = now // if there's not enough time for sealing, don't wait.
+		if d.replayPacing {
+			// Replay mode: the chain timestamp is far behind wall-clock because we are
+			// replaying a historical fork, so payloadTime is in the past. The normal
+			// path below would seal instantly ("catch up"), producing empty blocks as
+			// fast as the engine allows. Instead, pace the seal to a real block-time
+			// window measured from when this build started, so the execution engine
+			// gets the same ~block-time window it has in production to fill the block
+			// from the mempool. Block timestamps are unaffected (still parent+BlockTime).
+			// See OP-NODE_PATCH.md at the repo root.
+			blockTime := time.Duration(d.rollupCfg.BlockTime) * time.Second
+			d.nextAction = x.BuildStarted.Add(blockTime - d.sealingDuration)
+		} else {
+			d.nextAction = now // if there's not enough time for sealing, don't wait.
+		}
 	} else {
 		// finish with margin of sealing duration before payloadTime
 		d.nextAction = payloadTime.Add(-d.sealingDuration)
