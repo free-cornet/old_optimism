@@ -41,7 +41,7 @@ func NewDriver(logger log.Logger, cfg *rollup.Config, depSet derive.DependencySe
 		logger: logger,
 	}
 
-	pipeline := derive.NewDerivationPipeline(logger, cfg, depSet, l1Source, l1BlobsSource, altda.Disabled, l2Source, metrics.NoopMetrics, false, l1ChainConfig)
+	pipeline := derive.NewDerivationPipeline(logger, cfg, depSet, l1Source, l1BlobsSource, altda.Disabled, l2Source, metrics.NoopMetrics, false, l1ChainConfig, false)
 	pipelineDeriver := derive.NewPipelineDeriver(context.Background(), pipeline)
 	pipelineDeriver.AttachEmitter(d)
 

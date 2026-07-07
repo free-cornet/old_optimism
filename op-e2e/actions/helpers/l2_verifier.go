@@ -169,7 +169,7 @@ func NewL2Verifier(t Testing, log log.Logger, l1 derive.L1Fetcher,
 	ec.SetAttributesResetter(attrHandler)
 
 	indexingMode := supervisorEnabled
-	pipeline := derive.NewDerivationPipeline(log, cfg, depSet, l1, blobsSrc, altDASrc, eng, metrics, indexingMode, l1ChainConfig)
+	pipeline := derive.NewDerivationPipeline(log, cfg, depSet, l1, blobsSrc, altDASrc, eng, metrics, indexingMode, l1ChainConfig, false)
 	pipelineDeriver := derive.NewPipelineDeriver(ctx, pipeline)
 	sys.Register("pipeline", pipelineDeriver, opts)
 	ec.SetPipelineResetter(pipelineDeriver)
