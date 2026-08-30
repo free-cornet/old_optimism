@@ -75,7 +75,7 @@ func NewDriver(
 	attrHandler := attributes.NewAttributesHandler(log, cfg, driverCtx, l2, ec)
 	sys.Register("attributes-handler", attrHandler)
 
-	derivationPipeline := derive.NewDerivationPipeline(log, cfg, depSet, verifConfDepth, l1Blobs, altDA, l2, metrics, l1ChainConfig)
+	derivationPipeline := derive.NewDerivationPipeline(log, cfg, depSet, verifConfDepth, l1Blobs, altDA, l2, metrics, l1ChainConfig, driverCfg.ReplayPacing)
 
 	pipelineDeriver := derive.NewPipelineDeriver(driverCtx, derivationPipeline)
 	sys.Register("pipeline", pipelineDeriver)
@@ -115,7 +115,7 @@ func NewDriver(
 		// Connect origin selector to the engine controller for force reset notifications
 		ec.SetOriginSelectorResetter(findL1Origin)
 
-		sequencer = sequencing.NewSequencer(driverCtx, log, cfg, driverCfg.SequencerSealingDuration, attrBuilder, findL1Origin,
+		sequencer = sequencing.NewSequencer(driverCtx, log, cfg, driverCfg.SequencerSealingDuration, driverCfg.ReplayPacing, attrBuilder, findL1Origin,
 			sequencerStateListener, sequencerConductor, asyncGossiper, metrics, ec)
 		sys.Register("sequencer", sequencer)
 	} else {

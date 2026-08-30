@@ -46,9 +46,10 @@ type DataSourceFactory struct {
 	blobsFetcher L1BlobsFetcher
 	altDAFetcher AltDAInputFetcher
 	ecotoneTime  *uint64
+	replayMode   bool
 }
 
-func NewDataSourceFactory(log log.Logger, cfg *rollup.Config, fetcher L1Fetcher, blobsFetcher L1BlobsFetcher, altDAFetcher AltDAInputFetcher) *DataSourceFactory {
+func NewDataSourceFactory(log log.Logger, cfg *rollup.Config, fetcher L1Fetcher, blobsFetcher L1BlobsFetcher, altDAFetcher AltDAInputFetcher, replayMode bool) *DataSourceFactory {
 	config := DataSourceConfig{
 		l1Signer:          cfg.L1Signer(),
 		batchInboxAddress: cfg.BatchInboxAddress,
@@ -61,6 +62,7 @@ func NewDataSourceFactory(log log.Logger, cfg *rollup.Config, fetcher L1Fetcher,
 		blobsFetcher: blobsFetcher,
 		altDAFetcher: altDAFetcher,
 		ecotoneTime:  cfg.EcotoneTime,
+		replayMode:   replayMode,
 	}
 }
 
@@ -73,7 +75,7 @@ func (ds *DataSourceFactory) OpenData(ctx context.Context, ref eth.L1BlockRef, b
 		if ds.blobsFetcher == nil {
 			return nil, NewCriticalError(fmt.Errorf("ecotone upgrade active but beacon endpoint not configured"))
 		}
-		src = NewBlobDataSource(ctx, ds.log, ds.dsCfg, ds.fetcher, ds.blobsFetcher, ref, batcherAddr)
+		src = NewBlobDataSource(ctx, ds.log, ds.dsCfg, ds.fetcher, ds.blobsFetcher, ref, batcherAddr, ds.replayMode)
 	} else {
 		src = NewCalldataSource(ctx, ds.log, ds.dsCfg, ds.fetcher, ref, batcherAddr)
 	}

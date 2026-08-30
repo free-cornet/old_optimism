@@ -298,6 +298,18 @@ var (
 		Value:    50 * time.Millisecond,
 		Category: SequencerCategory,
 	}
+	SequencerReplayPacingFlag = &cli.BoolFlag{
+		Name: "sequencer.replay-pacing",
+		Usage: "Paces sequencer block production to wall-clock time (one block per block-time) even when the " +
+			"chain timestamp is far behind wall-clock, instead of racing to catch up by producing empty blocks. " +
+			"Also puts the derivation pipeline in replay mode: the channel-timeout walk-back on reset is skipped " +
+			"and L1 blocks whose blobs are unavailable are skipped instead of triggering a reset loop. " +
+			"Intended for replaying a historical fork of the chain for benchmarking; must not be set on a real node. " +
+			"See REPLAY_SETUP.md.",
+		EnvVars:  prefixEnvVars("SEQUENCER_REPLAY_PACING"),
+		Value:    false,
+		Category: SequencerCategory,
+	}
 	FinalityLookbackFlag = &cli.Uint64Flag{
 		Name:     "finality.lookback",
 		Usage:    "Number of L1 blocks to look back for finality verification. Uses default calculation if 0 (considers alt-DA challenge/resolve windows if applicable).",
@@ -472,6 +484,7 @@ var optionalFlags = []cli.Flag{
 	SequencerL1Confs,
 	SequencerRecoverMode,
 	SequencerSealingDurationFlag,
+	SequencerReplayPacingFlag,
 	FinalityLookbackFlag,
 	FinalityDelayFlag,
 	L1EpochPollIntervalFlag,

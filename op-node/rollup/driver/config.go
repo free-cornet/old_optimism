@@ -36,6 +36,15 @@ type Config struct {
 	// If this is <= 0 it is automatically adjusted to 50ms.
 	SequencerSealingDuration time.Duration `json:"sequencer_sealing_duration"`
 
+	// ReplayPacing, when true, makes the sequencer pace block production to wall-clock
+	// time (one block per block-time) even when the chain timestamp is far behind
+	// wall-clock, instead of racing to "catch up" by producing empty blocks. It also
+	// puts the derivation pipeline in replay mode (skip channel-timeout walk-back and
+	// tolerate missing blobs). Intended for replaying a historical fork of the chain
+	// for benchmarking. Off by default; it must not be set on a real (non-replay)
+	// node. See REPLAY_SETUP.md at the repo root.
+	ReplayPacing bool `json:"replay_pacing"`
+
 	// Finalizer contains runtime configuration for finality behavior.
 	Finalizer *finality.Config `json:"finalizer,omitempty"`
 }
