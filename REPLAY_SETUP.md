@@ -211,18 +211,23 @@ Then, in the rig, confirm three things:
 block from scratch on each payload-job tick and keeps the highest-fee result, so the final
 payload is a single global fee sort of one mempool snapshot.
 
-**op-reth does not build subblocks, at any version.** `rust/op-reth/crates/flashblocks/`
-is a consumer — its own header says "A downstream integration of Flashblocks" — and
-`--flashblocks-url` / `--subblocks-url` subscribe to a stream produced elsewhere.
-`rust/op-reth/crates/payload/` contains zero references to flashblocks or subblocks. The
-spec agrees: `specs.optimism.io/protocol/flashblocks.html` defines the builder as an
-*External Block Builder*, separate from the execution client, and names the reference
-implementations as rollup-boost, op-rbuilder, flashblocks-websocket-proxy and
-reth-flashblocks — the last being "the execution client modification", i.e. the consumer.
+**The open-source op-reth in this tree does not build subblocks.**
+`rust/op-reth/crates/flashblocks/` is a consumer — its own header says "A downstream
+integration of Flashblocks" — `--flashblocks-url` / `--subblocks-url` subscribe to a
+stream produced elsewhere, and `rust/op-reth/crates/payload/` contains zero references to
+flashblocks or subblocks.
 
-Reproducing OP Mainnet's segmented intra-block ordering requires a **subblock/flashblock
-builder**: `rust/op-rbuilder` (vendored at this tag) behind `rust/rollup-boost`. Both were
-removed from `develop` in `e92bda111c`, which is the main reason this branch is based on
+**A different execution client does build them natively: `op-reth-premium`.** Per commit
+`b9fbe71fbd` (on develop), it is a CLI superset of op-reth with an additive
+`--subblocks.*` namespace, it "lives in a separate repo", and it is "both the sequencer EL
+and the in-process subblocks producer, so there is no rollup-boost and no separate builder
+EL" (`1883acd216`). That is the currently supported path, and it is what OP Mainnet runs
+since the 200 ms subblocks rollout of 2026-08-31.
+
+**For a replay of June 2026, the legacy path is the faithful one.** At that date OP Mainnet
+ran the Flashbots stack at 250 ms, so reproducing the observed intra-block ordering means
+`rust/op-rbuilder` (vendored at this tag) behind `rust/rollup-boost`. Both were removed
+from `develop` in `e92bda111c`, which is the main reason this branch is based on
 `op-node/v1.19.5`.
 
 See `../hypothesis/h2_multi_passes_in_bloc_building/` and `../Modifications_OP_STACK.md`
