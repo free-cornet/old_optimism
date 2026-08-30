@@ -214,7 +214,11 @@ payload is a single global fee sort of one mempool snapshot.
 **op-reth does not build subblocks, at any version.** `rust/op-reth/crates/flashblocks/`
 is a consumer — its own header says "A downstream integration of Flashblocks" — and
 `--flashblocks-url` / `--subblocks-url` subscribe to a stream produced elsewhere.
-`rust/op-reth/crates/payload/` contains zero references to flashblocks or subblocks.
+`rust/op-reth/crates/payload/` contains zero references to flashblocks or subblocks. The
+spec agrees: `specs.optimism.io/protocol/flashblocks.html` defines the builder as an
+*External Block Builder*, separate from the execution client, and names the reference
+implementations as rollup-boost, op-rbuilder, flashblocks-websocket-proxy and
+reth-flashblocks — the last being "the execution client modification", i.e. the consumer.
 
 Reproducing OP Mainnet's segmented intra-block ordering requires a **subblock/flashblock
 builder**: `rust/op-rbuilder` (vendored at this tag) behind `rust/rollup-boost`. Both were
